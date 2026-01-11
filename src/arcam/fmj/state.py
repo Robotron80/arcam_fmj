@@ -7,6 +7,7 @@ from typing import Any, TypeVar
 from . import (
     APIVERSION_450_SERIES,
     APIVERSION_860_SERIES,
+    APIVERSION_LEXICON_SERIES,
     APIVERSION_HDA_SERIES,
     APIVERSION_SA_SERIES,
     APIVERSION_PA_SERIES,
@@ -431,6 +432,9 @@ class State:
 
                 if data.device_model in APIVERSION_450_SERIES:
                     self._api_model = ApiModel.API450_SERIES
+
+                if data.device_model in APIVERSION_LEXICON_SERIES:
+                    self._api_model = ApiModel.APILEXICON_SERIES
 
                 if data.device_model in APIVERSION_860_SERIES:
                     self._api_model = ApiModel.API860_SERIES
