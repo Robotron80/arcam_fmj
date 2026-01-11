@@ -465,6 +465,15 @@ class MenuCodes(IntOrTypeEnum):
     USB = 0x0A
 
 
+class MenuNavigationCodes(IntOrTypeEnum):
+    MENU = 0x52
+    UP = 0x56
+    DOWN = 0x55
+    LEFT = 0x51
+    RIGHT = 0x50
+    OK = 0x57
+
+
 class DecodeMode2CH(IntOrTypeEnum):
     STEREO = 0x01
     DOLBY_PLII_IIx_MOVIE = 0x02, APIVERSION_DOLBY_PL_SERIES
@@ -951,6 +960,41 @@ RC5CODE_VOLUME = {
     (ApiModel.APIST_SERIES, 1): {
         True: bytes([21, 86]),
         False: bytes([21, 85]),
+    },
+}
+
+RC5CODE_MENU_NAVIGATION = {
+    (ApiModel.API450_SERIES, 1): {
+        MenuNavigationCodes.MENU: bytes([16, 82]),
+        MenuNavigationCodes.UP: bytes([16, 86]),
+        MenuNavigationCodes.DOWN: bytes([16, 85]),
+        MenuNavigationCodes.LEFT: bytes([16, 81]),
+        MenuNavigationCodes.RIGHT: bytes([16, 80]),
+        MenuNavigationCodes.OK: bytes([16, 87]),
+    },
+    (ApiModel.API860_SERIES, 1): {
+        MenuNavigationCodes.MENU: bytes([16, 82]),
+        MenuNavigationCodes.UP: bytes([16, 86]),
+        MenuNavigationCodes.DOWN: bytes([16, 85]),
+        MenuNavigationCodes.LEFT: bytes([16, 81]),
+        MenuNavigationCodes.RIGHT: bytes([16, 80]),
+        MenuNavigationCodes.OK: bytes([16, 87]),
+    },
+    (ApiModel.APILEXICON_SERIES, 1): {
+        MenuNavigationCodes.MENU: bytes([16, 82]),
+        MenuNavigationCodes.UP: bytes([16, 86]),
+        MenuNavigationCodes.DOWN: bytes([16, 85]),
+        MenuNavigationCodes.LEFT: bytes([16, 81]),
+        MenuNavigationCodes.RIGHT: bytes([16, 80]),
+        MenuNavigationCodes.OK: bytes([16, 87]),
+    },
+    (ApiModel.APIHDA_SERIES, 1): {
+        MenuNavigationCodes.MENU: bytes([16, 82]),
+        MenuNavigationCodes.UP: bytes([16, 86]),
+        MenuNavigationCodes.DOWN: bytes([16, 85]),
+        MenuNavigationCodes.LEFT: bytes([16, 81]),
+        MenuNavigationCodes.RIGHT: bytes([16, 80]),
+        MenuNavigationCodes.OK: bytes([16, 87]),
     },
 }
 

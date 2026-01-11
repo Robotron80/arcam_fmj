@@ -6,6 +6,7 @@ import sys
 from . import (
     APIVERSION_450_SERIES,
     APIVERSION_860_SERIES,
+    APIVERSION_LEXICON_SERIES,
     APIVERSION_HDA_SERIES,
     ApiModel,
     CommandCodes,
@@ -60,6 +61,25 @@ parser_state.add_argument("--source", type=auto_source)
 parser_state.add_argument("--monitor", action="store_true")
 parser_state.add_argument("--power-on", action=argparse.BooleanOptionalAction)
 parser_state.add_argument("--power-off", action=argparse.BooleanOptionalAction)
+parser_state.add_argument("--dirac-on", action=argparse.BooleanOptionalAction)
+parser_state.add_argument("--dirac-off", action=argparse.BooleanOptionalAction)
+parser_state.add_argument("--lipsync", type=int, help="Set lip sync delay in ms")
+parser_state.add_argument(
+    "--subwoofer-trim",
+    type=float,
+    help="Set subwoofer trim in dB (-12 to +12)",
+)
+parser_state.add_argument(
+    "--show-audio",
+    action="store_true",
+    help="Show audio-related fields (format, sample rate, decode, Dirac, lipsync, subwoofer)",
+)
+parser_state.add_argument("--decode-mode", help="Set decode sound mode by name")
+parser_state.add_argument(
+    "--list-decode-modes",
+    action="store_true",
+    help="List available decode sound modes for current input",
+)
 
 parser_client = subparsers.add_parser("client")
 parser_client.add_argument("--host", required=True)
@@ -101,6 +121,31 @@ async def run_state(args):
         if args.power_off is not None:
             await state.set_power(False)
 
+        if args.dirac_on is not None:
+            await state.set_room_equalization(True)
+
+        if args.dirac_off is not None:
+            await state.set_room_equalization(False)
+
+        if args.lipsync is not None:
+            await state.set_lipsync_delay(args.lipsync)
+
+        if args.subwoofer_trim is not None:
+            await state.set_subwoofer_trim(args.subwoofer_trim)
+
+        if args.list_decode_modes:
+            modes = state.get_decode_modes()
+            if modes is not None:
+                print([m.name for m in modes])
+            else:
+                print([])
+
+        if args.decode_mode:
+            try:
+                await state.set_decode_mode(args.decode_mode)
+            except ValueError as e:
+                _LOGGER.error("Failed to set decode mode: %s", e)
+
         if args.monitor:
             async with state:
                 prev = repr(state)
@@ -111,7 +156,36 @@ async def run_state(args):
                         prev = curr
                     await asyncio.sleep(delay=1)
         else:
-            print(state)
+            # Avoid printing full state if actions already printed output
+            did_action = any(
+                [
+                    args.list_decode_modes,
+                    bool(args.decode_mode),
+                    args.volume is not None,
+                    args.source is not None,
+                    args.power_on is not None,
+                    args.power_off is not None,
+                    args.dirac_on is not None,
+                    args.dirac_off is not None,
+                    args.lipsync is not None,
+                    args.subwoofer_trim is not None,
+                ]
+            )
+            if args.show_audio:
+                fmt, cfg = state.get_incoming_audio_format()
+                dec = state.get_decode_mode()
+                info = {
+                    "audio_format": fmt.name if fmt else None,
+                    "audio_config": cfg.name if cfg else None,
+                    "sample_rate": state.get_incoming_audio_sample_rate(),
+                    "decode_mode": dec.name if dec else None,
+                    "dirac_enabled": state.get_room_equalization(),
+                    "lipsync_ms": state.get_lipsync_delay(),
+                    "subwoofer_trim_db": state.get_subwoofer_trim(),
+                }
+                print(info)
+            elif not did_action:
+                print(state)
 
 
 async def run_server(args):
@@ -121,6 +195,8 @@ async def run_server(args):
 
             if model in APIVERSION_450_SERIES:
                 self._api_version = ApiModel.API450_SERIES
+            elif model in APIVERSION_LEXICON_SERIES:
+                self._api_version = ApiModel.APILEXICON_SERIES
             elif model in APIVERSION_860_SERIES:
                 self._api_version = ApiModel.API860_SERIES
             elif model in APIVERSION_HDA_SERIES:
@@ -131,7 +207,7 @@ async def run_server(args):
             rc5_key = (self._api_version, 1)
 
             self._volume = bytes([10])
-            self._source = bytes([SourceCodes.PVR])
+            self._source = SourceCodes.PVR.to_bytes(self._api_version, 1)
             self._video_parameters = VideoParameters(
                 horizontal_resolution=1920,
                 vertical_resolution=1080,
@@ -144,11 +220,11 @@ async def run_server(args):
                 [IncomingAudioFormat.PCM, IncomingAudioConfig.STEREO_ONLY]
             )
             self._audio_sample_rate = 48000
-            self._decode_mode_2ch = bytes(
-                [next(iter(RC5CODE_DECODE_MODE_2CH[rc5_key]))]
+            self._decode_mode_2ch = next(
+                iter(RC5CODE_DECODE_MODE_2CH[rc5_key].values())
             )
-            self._decode_mode_mch = bytes(
-                [next(iter(RC5CODE_DECODE_MODE_MCH[rc5_key]))]
+            self._decode_mode_mch = next(
+                iter(RC5CODE_DECODE_MODE_MCH[rc5_key].values())
             )
             self._tuner_preset = b"\0xff"
             self._presets = {
