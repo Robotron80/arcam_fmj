@@ -7,3 +7,4 @@ dist
 .coverage
 .mypy_cache
 venv
+.github/copilot-instructions.md

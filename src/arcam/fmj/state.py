@@ -307,6 +307,65 @@ class State:
             await self._client.request(
                 self._zn, CommandCodes.SIMULATE_RC5_IR_COMMAND, command
             )
+            
+    def get_lipsync_delay(self) -> int | None:
+        """Return lip sync delay in milliseconds."""
+        value = self._state.get(CommandCodes.LIPSYNC_DELAY)
+        if value is None:
+            return None
+        return int.from_bytes(value, "big")
+
+    async def set_lipsync_delay(self, delay_ms: int) -> None:
+        """Set lip sync delay in milliseconds."""
+        await self._client.request(
+            self._zn, CommandCodes.LIPSYNC_DELAY, bytes([delay_ms])
+        )
+
+    def get_subwoofer_trim(self) -> float | None:
+        """Return subwoofer trim level in dB (-12 to +12 dB)."""
+        value = self._state.get(CommandCodes.SUBWOOFER_TRIM)
+        if value is None:
+            return None
+        # Convert byte (0-24) back to dB value (where 12 = 0dB center)
+        trim_byte = int.from_bytes(value, "big")
+        return (trim_byte * 24 / 255) - 12
+
+    async def set_subwoofer_trim(self, trim_db: float) -> None:
+        """Set subwoofer trim level in dB (-12 to +12 dB)."""
+        # Convert dB value to byte (0-24, where 12 = 0dB center)
+        trim_byte = int(round((trim_db + 12) * 255 / 24))
+        await self._client.request(
+            self._zn, CommandCodes.SUBWOOFER_TRIM, bytes([trim_byte])
+        )
+
+    def get_room_equalization(self) -> bool | None:
+        """Return room equalization (DIRAC) state."""
+        value = self._state.get(CommandCodes.ROOM_EQUALIZATION)
+        if value is None:
+            return None
+        return int.from_bytes(value, "big") == 0x01
+
+    async def set_room_equalization(self, enabled: bool) -> None:
+        """Enable or disable room equalization (DIRAC)."""
+        bool_to_hex = 0x01 if enabled else 0x00
+        await self._client.request(
+            self._zn, CommandCodes.ROOM_EQUALIZATION, bytes([bool_to_hex])
+        )
+
+
+    def get_room_equalization(self) -> bool | None:
+        """Get room equalization (DIRAC) status."""
+        value = self._state.get(CommandCodes.ROOM_EQUALIZATION)
+        if value is None:
+            return None
+        return int.from_bytes(value, "big") == 0x01        
+
+    async def set_room_equalization(self, enabled: bool) -> None:
+        """Enable or disable room equalization."""
+        bool_to_hex = 0x01 if enabled else 0x00
+        await self._client.request(
+            self._zn, CommandCodes.ROOM_EQUALIZATION, bytes([bool_to_hex])
+        )
 
     def get_source(self) -> SourceCodes | None:
         value = self._state.get(CommandCodes.CURRENT_SOURCE)
@@ -478,6 +537,9 @@ class State:
                     _update(CommandCodes.DLS_PDT_INFO),
                     _update(CommandCodes.RDS_INFORMATION),
                     _update(CommandCodes.TUNER_PRESET),
+                    _update(CommandCodes.ROOM_EQUALIZATION),
+                    _update(CommandCodes.LIPSYNC_DELAY),
+                    _update(CommandCodes.SUBWOOFER_TRIM),
                     _update_presets(),
                 ]
             )
