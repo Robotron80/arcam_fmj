@@ -174,11 +174,13 @@ async def run_state(args):
             if args.show_audio:
                 fmt, cfg = state.get_incoming_audio_format()
                 dec = state.get_decode_mode()
+                src = state.get_source()
                 info = {
-                    "audio_format": fmt.name if fmt else None,
-                    "audio_config": cfg.name if cfg else None,
+                    "audio_format": fmt.name if fmt is not None else None,
+                    "audio_config": cfg.name if cfg is not None else None,
                     "sample_rate": state.get_incoming_audio_sample_rate(),
-                    "decode_mode": dec.name if dec else None,
+                    "decode_mode": dec.name if dec is not None else None,
+                    "source": src.name if src is not None else None,
                     "dirac_enabled": state.get_room_equalization(),
                     "lipsync_ms": state.get_lipsync_delay(),
                     "subwoofer_trim_db": state.get_subwoofer_trim(),

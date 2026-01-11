@@ -331,9 +331,9 @@ class CommandCodes(IntOrTypeEnum):
     LIPSYNC_DELAY = 0x40, None, EnumFlags.ZONE_SUPPORT
     COMPRESSION = 0x41, None, EnumFlags.ZONE_SUPPORT
 
-    INCOMING_VIDEO_PARAMETERS = 0x42, None
-    INCOMING_AUDIO_FORMAT = 0x43, None
-    INCOMING_AUDIO_SAMPLE_RATE = 0x44
+    INCOMING_VIDEO_PARAMETERS = 0x42, None, EnumFlags.ZONE_SUPPORT
+    INCOMING_AUDIO_FORMAT = 0x43, None, EnumFlags.ZONE_SUPPORT
+    INCOMING_AUDIO_SAMPLE_RATE = 0x44, None, EnumFlags.ZONE_SUPPORT
 
     SUB_STEREO_TRIM = 0x45  # Set/Request
     VIDEO_BRIGHTNESS = 0x46  # Set/Request
@@ -1129,15 +1129,21 @@ class VideoParameters:
     colorspace = attr.ib(type=IncomingVideoColorspace)
 
     @staticmethod
-    def from_bytes(data: bytes) -> "VideoParameters":
-        return VideoParameters(
-            horizontal_resolution=int.from_bytes(data[0:2], "big"),
-            vertical_resolution=int.from_bytes(data[2:4], "big"),
-            refresh_rate=data[4],
-            interlaced=(data[5] == 0x01),
-            aspect_ratio=IncomingVideoAspectRatio.from_int(data[6]),
-            colorspace=IncomingVideoColorspace.from_int(data[7]),
-        )
+    def from_bytes(data: bytes) -> "VideoParameters | None":
+        # Guard against incomplete or missing data
+        if data is None or len(data) < 8:
+            return None
+        try:
+            return VideoParameters(
+                horizontal_resolution=int.from_bytes(data[0:2], "big"),
+                vertical_resolution=int.from_bytes(data[2:4], "big"),
+                refresh_rate=data[4],
+                interlaced=(data[5] == 0x01),
+                aspect_ratio=IncomingVideoAspectRatio.from_int(data[6]),
+                colorspace=IncomingVideoColorspace.from_int(data[7]),
+            )
+        except (ValueError, IndexError):
+            return None
 
     def to_dict(self) -> dict[str, Any]:
         return {
