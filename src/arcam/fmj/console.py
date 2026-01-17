@@ -79,12 +79,6 @@ parser_state.add_argument(
     action="store_true",
     help="Query the user-configured input name",
 )
-parser_state.add_argument("--decode-mode", help="Set decode sound mode by name")
-parser_state.add_argument(
-    "--list-decode-modes",
-    action="store_true",
-    help="List available decode sound modes for current input",
-)
 
 parser_client = subparsers.add_parser("client")
 parser_client.add_argument("--host", required=True)
@@ -138,19 +132,6 @@ async def run_state(args):
         if args.subwoofer_trim is not None:
             await state.set_subwoofer_trim(args.subwoofer_trim)
 
-        if args.list_decode_modes:
-            modes = state.get_decode_modes()
-            if modes is not None:
-                print([m.name for m in modes])
-            else:
-                print([])
-
-        if args.decode_mode:
-            try:
-                await state.set_decode_mode(args.decode_mode)
-            except ValueError as e:
-                _LOGGER.error("Failed to set decode mode: %s", e)
-
         if args.monitor:
             async with state:
                 prev = repr(state)
@@ -164,8 +145,6 @@ async def run_state(args):
             # Avoid printing full state if actions already printed output
             did_action = any(
                 [
-                    args.list_decode_modes,
-                    bool(args.decode_mode),
                     args.volume is not None,
                     args.source is not None,
                     args.power_on is not None,
