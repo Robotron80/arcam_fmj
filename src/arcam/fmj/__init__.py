@@ -907,6 +907,14 @@ RC5CODE_MUTE = {
         True: bytes([23, 4]),
         False: bytes([23, 5]),
     },
+    (ApiModel.APILEXICON_SERIES, 1): {
+        True: bytes([16, 26]),
+        False: bytes([16, 120]),
+    },
+    (ApiModel.APILEXICON_SERIES, 2): {
+        True: bytes([23, 4]),
+        False: bytes([23, 5]),
+    },
     (ApiModel.APIHDA_SERIES, 1): {
         True: bytes([16, 26]),
         False: bytes([16, 120]),
