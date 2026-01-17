@@ -74,6 +74,11 @@ parser_state.add_argument(
     action="store_true",
     help="Show audio-related fields (format, sample rate, decode, Dirac, lipsync, subwoofer)",
 )
+parser_state.add_argument(
+    "--input-name",
+    action="store_true",
+    help="Query the user-configured input name",
+)
 parser_state.add_argument("--decode-mode", help="Set decode sound mode by name")
 parser_state.add_argument(
     "--list-decode-modes",
@@ -169,22 +174,29 @@ async def run_state(args):
                     args.dirac_off is not None,
                     args.lipsync is not None,
                     args.subwoofer_trim is not None,
+                    args.show_audio,
+                    args.input_name,
                 ]
             )
-            if args.show_audio:
-                fmt, cfg = state.get_incoming_audio_format()
-                dec = state.get_decode_mode()
-                src = state.get_source()
-                info = {
-                    "audio_format": fmt.name if fmt is not None else None,
-                    "audio_config": cfg.name if cfg is not None else None,
-                    "sample_rate": state.get_incoming_audio_sample_rate(),
-                    "decode_mode": dec.name if dec is not None else None,
-                    "source": src.name if src is not None else None,
-                    "dirac_enabled": state.get_room_equalization(),
-                    "lipsync_ms": state.get_lipsync_delay(),
-                    "subwoofer_trim_db": state.get_subwoofer_trim(),
-                }
+            if args.show_audio or args.input_name:
+                info = {}
+                if args.show_audio:
+                    fmt, cfg = state.get_incoming_audio_format()
+                    dec = state.get_decode_mode()
+                    src = state.get_source()
+                    info.update({
+                        "audio_format": fmt.name if fmt is not None else None,
+                        "audio_config": cfg.name if cfg is not None else None,
+                        "sample_rate": state.get_incoming_audio_sample_rate(),
+                        "decode_mode": dec.name if dec is not None else None,
+                        "source": src.name if src is not None else None,
+                        "dirac_enabled": state.get_room_equalization(),
+                        "lipsync_ms": state.get_lipsync_delay(),
+                        "subwoofer_trim_db": state.get_subwoofer_trim(),
+                    })
+                if args.input_name:
+                    input_name = await state.get_input_name()
+                    info["input_name"] = input_name
                 print(info)
             elif not did_action:
                 print(state)

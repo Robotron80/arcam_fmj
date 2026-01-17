@@ -412,6 +412,17 @@ class State:
     def get_source_list(self) -> list[SourceCodes]:
         return list(RC5CODE_SOURCE[(self._api_model, self._zn)].keys())
 
+    async def get_input_name(self) -> str | None:
+        """Query the user-configured input name for the current source."""
+        try:
+            data = await self._client.request(
+                self._zn, CommandCodes.INPUT_NAME, bytes([0xF0])
+            )
+            return data.decode('utf-8', errors='replace').rstrip('\x00').strip()
+        except Exception as e:
+            _LOGGER.warning("Failed to get input name: %s", e)
+            return None
+
     async def set_source(self, src: SourceCodes) -> None:
         if self._api_model in SOURCE_WRITE_SUPPORTED:
             value = src.to_bytes(self._api_model, self._zn)

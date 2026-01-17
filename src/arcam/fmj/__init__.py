@@ -293,6 +293,8 @@ class CommandCodes(IntOrTypeEnum):
     VIDEO_SELECTION = 0x0A
     SELECT_ANALOG_DIGITAL = 0x0B
     VIDEO_INPUT_TYPE = 0x0C  # IMAX_ENHANCED on 860 and HDA Series (not AVR5)
+    INPUT_NAME = 0x20  # Set/Request
+
 
     # Output Commands
     VOLUME = 0x0D, None, EnumFlags.ZONE_SUPPORT  # Set/Request
@@ -348,7 +350,6 @@ class CommandCodes(IntOrTypeEnum):
     VIDEO_OUTPUT_FRAME_RATE = 0x50  # Set/Request BLUETOOTH_STATUS on HDA series
 
     # 2.0 Commands
-    INPUT_NAME = 0x20  # Set/Request
     FM_SCAN = 0x23
     DAB_SCAN = 0x24
     HEARTBEAT = 0x25
